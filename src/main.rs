@@ -1,4 +1,5 @@
-use std::{io};
+mod math;
+mod utils;
 
 // Formulas:
 // Celcius to farhenheit: F = (C * 9/5) + 32
@@ -7,7 +8,7 @@ use std::{io};
 const OPTIONS: [&str; 3] = ["Celcius to Fahrenheit", "Fahrenheit to Celcius", "Fibonacci Suquence"];
 
 fn main () {
-    println!("Rwiss army knives");
+    println!("Rwiss army knife");
 
     loop {
         println!("Options:");
@@ -15,7 +16,7 @@ fn main () {
             println!("{}.- {}", option.0 + 1, option.1);
         }
 
-        let option = match get_input_and_parse("Input any option or press 'q' to exit: ") {
+        let option = match utils::tools::get_input_and_parse("Input any option or press 'q' to exit: ") {
             Ok(num) => num,
             Err(msg) => {
                 if msg == "Exiting" {
@@ -27,9 +28,9 @@ fn main () {
         }.round() as i32;
 
         match option {
-            1 => celcius_to_fahrenheit_calc(),
-            2 => farhenheit_to_celcius_calc(),
-            3 => todo!("Work in progress, be patient"),
+            1 => celcius_to_fahrenheit(),
+            2 => farhenheit_to_celcius(),
+            3 => fib_sequence(),
             _ => println!("{} is not a valid option", option),
         }
     }
@@ -37,11 +38,11 @@ fn main () {
     println!("Ending program");
 }
 
-fn celcius_to_fahrenheit_calc() {
-    println!("Celcius to Fahrenheit");
+fn fib_sequence() {
+    println!("Fibonacci Suquence");
 
     loop {
-        let celcius = match get_input_and_parse("Enter the temperature in Celcius or input 'q' to get back to the main menu: ") {
+        let n = match utils::tools::get_input_and_parse("Enter the number of elements in the sequence or input 'q' to get back to the main menu: ") {
             Ok(num) => num,
             Err(msg) => {
                 if msg == "Exiting" {
@@ -52,18 +53,40 @@ fn celcius_to_fahrenheit_calc() {
             }
         };
 
-        let result = calc_celcius_to_fahrenheit(celcius);
+        let result = math::operations::calc_fib_sequence(n);
+
+        println!("The fibonacci sequence is: {:?}", result);
+        continue;
+    }
+}
+
+fn celcius_to_fahrenheit() {
+    println!("Celcius to Fahrenheit");
+
+    loop {
+        let celcius = match utils::tools::get_input_and_parse("Enter the temperature in Celcius or input 'q' to get back to the main menu: ") {
+            Ok(num) => num,
+            Err(msg) => {
+                if msg == "Exiting" {
+                    break;
+                }
+                println!("{}", msg);
+                continue;
+            }
+        };
+
+        let result = math::operations::calc_celcius_to_fahrenheit(celcius);
 
         println!("The temperature in Fahrenheit is: {}", result);
         continue;
     }
 }
 
-fn farhenheit_to_celcius_calc() {
+fn farhenheit_to_celcius() {
     println!("Fahrenheit to Celcius");
 
     loop {
-        let fahrenheit = match get_input_and_parse("Enter the temperature in Fahrenheit or input 'q' to get back to the main menu: ") {
+        let fahrenheit = match utils::tools::get_input_and_parse("Enter the temperature in Fahrenheit or input 'q' to get back to the main menu: ") {
             Ok(num) => num,
             Err(msg) => {
                 if msg == "Exiting" {
@@ -74,34 +97,10 @@ fn farhenheit_to_celcius_calc() {
             }
         };
 
-        let result = calc_fahrenheit_to_celcius(fahrenheit);
+        let result = math::operations::calc_fahrenheit_to_celcius(fahrenheit);
 
         println!("The temperature in Celcius is: {}", result);
         continue;
-    }
-}
-
-fn calc_fahrenheit_to_celcius(fahrenheit: f32) -> f32 {
-    (fahrenheit - 32.0) * 5.0/9.0
-}
-
-fn calc_celcius_to_fahrenheit(celcius: f32) -> f32 {
-    (celcius * 9.0/5.0) + 32.0
-}
-
-fn get_input_and_parse(title: &str) -> Result<f32, String> {
-    println!("{}", title);
-    let mut input = String::new();
-
-    io::stdin().read_line(&mut input).expect("Failed to read line");
-
-    if input.trim() == "q" {
-        return Err("Exiting".to_string());
-    }
-
-    match input.trim().parse() {
-        Ok(num) => Ok(num),
-        Err(_) => Err("Please enter a valid number".to_string()),
     }
 }
 
@@ -109,17 +108,36 @@ fn get_input_and_parse(title: &str) -> Result<f32, String> {
 mod tests {
     use super::*;
 
+    const TEST_CELSIUS_CASES: &[(f32, f32)] = &[(0.0, 32.0), (100.0, 212.0), (37.0, 98.6)];
+    const TEST_FAHRENHEIT_CASES: &[(f32, f32)] = &[(32.0, 0.0), (212.0, 100.0), (98.6, 37.0)];
+
     #[test]
-    fn test_celcius_to_fahrenheit() {
-        assert_eq!(calc_celcius_to_fahrenheit(0.0), 32.0);
-        assert_eq!(calc_celcius_to_fahrenheit(100.0), 212.0);
-        assert_eq!(calc_celcius_to_fahrenheit(37.0), 98.6);
+    fn test_celsius_to_fahrenheit() {
+        TEST_CELSIUS_CASES.iter().for_each(|&(c, f)| {
+            assert_eq!(math::operations::calc_celcius_to_fahrenheit(c), f);
+        });
     }
 
     #[test]
-    fn test_fahrenheit_to_celcius() {
-        assert_eq!(calc_fahrenheit_to_celcius(32.0), 0.0);
-        assert_eq!(calc_fahrenheit_to_celcius(212.0), 100.0);
-        assert_eq!(calc_fahrenheit_to_celcius(98.6), 37.0);
+    fn test_fahrenheit_to_celsius() {
+        TEST_FAHRENHEIT_CASES.iter().for_each(|&(f, c)| {
+            assert_eq!(math::operations::calc_fahrenheit_to_celcius(f), c);
+        });
+    }
+
+    #[test]
+    fn test_fib_sequence() {
+        let test_cases = [
+            (0.0, vec![0]),
+            (1.0, vec![0]),
+            (2.0, vec![0, 1]),
+            (3.0, vec![0, 1, 1]),
+            (4.0, vec![0, 1, 1, 2]),
+            (5.0, vec![0, 1, 1, 2, 3]),
+        ];
+
+        test_cases.iter().for_each(|&(n, ref expected)| {
+            assert_eq!(math::operations::calc_fib_sequence(n), *expected);
+        });
     }
 }
